@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * Reactive localStorage value. All components using the same key
  * stay in sync via the 'storage' event + a same-tab CustomEvent.
+ *
+ * Important: we compare serialized values to avoid infinite re-render
+ * loops caused by JSON.parse always returning a new object reference.
  */
 export function useLocalState<T>(key: string, initial: T) {
   const read = (): T => {
@@ -15,19 +18,36 @@ export function useLocalState<T>(key: string, initial: T) {
   }
 
   const [value, setValue] = useState<T>(read)
+  const lastWritten = useRef<string>(JSON.stringify(value))
 
+  // Write on change + notify other components (skip if nothing actually changed)
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value))
+    const serialized = JSON.stringify(value)
+    if (serialized === lastWritten.current && localStorage.getItem(key) === serialized) {
+      return
+    }
+    lastWritten.current = serialized
+    localStorage.setItem(key, serialized)
     window.dispatchEvent(new CustomEvent('sdp:storage', { detail: { key } }))
   }, [key, value])
 
+  // Listen for changes coming from OTHER instances / tabs
   useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === key) setValue(read())
+    const apply = () => {
+      const raw = localStorage.getItem(key)
+      const serialized = raw ?? JSON.stringify(initial)
+      if (serialized === lastWritten.current) return
+      lastWritten.current = serialized
+      try {
+        setValue(raw ? (JSON.parse(raw) as T) : initial)
+      } catch {
+        setValue(initial)
+      }
     }
-    const onCustom = (e: Event) => {
+    const onStorage = (e: StorageEvent) => { if (e.key === key) apply() }
+    const onCustom  = (e: Event) => {
       const ce = e as CustomEvent<{ key: string }>
-      if (ce.detail?.key === key) setValue(read())
+      if (ce.detail?.key === key) apply()
     }
     window.addEventListener('storage', onStorage)
     window.addEventListener('sdp:storage', onCustom as EventListener)
