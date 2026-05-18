@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   Building2, MapPin, Flame, Truck, Zap, FileBarChart,
   ClipboardCheck, Award, Settings, ArrowRight, CheckCircle2, Circle, Leaf,
+  PieChart as PieIcon, BarChart3, Target,
 } from 'lucide-react'
 import { useLocalState } from '../lib/storage'
 import {
@@ -10,6 +11,8 @@ import {
   type Company, type Site, type FuelEntry, type FleetEntry, type ElectricityEntry,
 } from '../lib/types'
 import { fuelEmissionsTons, fleetEmissionsTons, electricityEmissionsTons } from '../lib/emissionFactors'
+import { sectorBenchmark } from '../lib/benchmarks'
+import { ScopeDonut, PerSiteStackedBar, SectorBenchmark } from '../components/charts'
 
 const MODULES = [
   { to: '/company',            icon: Building2,      title: 'Company Profile',       desc: 'Legal entity, sector & contact info.' },
@@ -40,7 +43,6 @@ export default function Dashboard() {
   const fleetDone  = fleet.length > 0
   const elecDone   = electricity.length > 0
 
-  // Scope 1
   const scope1Fuels = useMemo(
     () => fuels.reduce((s, e) => s + fuelEmissionsTons(e.fuelId, Number(e.quantity || 0)), 0),
     [fuels]
@@ -56,7 +58,6 @@ export default function Dashboard() {
   )
   const scope1Total = scope1Fuels + scope1Fleet
 
-  // Scope 2
   const elec = useMemo(() => {
     let grid = 0, purchased = 0, onsite = 0, tons = 0
     electricity.forEach(e => {
@@ -74,34 +75,45 @@ export default function Dashboard() {
   const scope2Total = elec.tons
   const totalGHG    = scope1Total + scope2Total
 
-  // Highest emitting site (Scope 1 fuels + fleet + Scope 2 electricity)
-  const perSite = useMemo(() => {
-    const m = new Map<string, number>()
+  const perSiteChartData = useMemo(() => {
+    const m = new Map<string, { scope1Fuels: number; scope1Fleet: number; scope2: number }>()
+    sites.forEach(s => m.set(s.id, { scope1Fuels: 0, scope1Fleet: 0, scope2: 0 }))
     fuels.forEach(e => {
-      m.set(e.siteId, (m.get(e.siteId) ?? 0) + fuelEmissionsTons(e.fuelId, Number(e.quantity || 0)))
+      const row = m.get(e.siteId); if (!row) return
+      row.scope1Fuels += fuelEmissionsTons(e.fuelId, Number(e.quantity || 0))
     })
     fleet.forEach(e => {
-      const t = fleetEmissionsTons(
+      const row = m.get(e.siteId); if (!row) return
+      row.scope1Fleet += fleetEmissionsTons(
         e.fuelId, e.mode,
         Number(e.quantity || 0),
         Number(e.kmDriven || 0),
         Number(e.consumptionPer100km || 0),
       )
-      m.set(e.siteId, (m.get(e.siteId) ?? 0) + t)
     })
     electricity.forEach(e => {
-      const t = electricityEmissionsTons(e.country, Number(e.gridKwh || 0))
-      m.set(e.siteId, (m.get(e.siteId) ?? 0) + t)
+      const row = m.get(e.siteId); if (!row) return
+      row.scope2 += electricityEmissionsTons(e.country, Number(e.gridKwh || 0))
     })
-    return m
-  }, [fuels, fleet, electricity])
+    return sites.map(s => ({
+      site: s.name,
+      ...(m.get(s.id) ?? { scope1Fuels: 0, scope1Fleet: 0, scope2: 0 }),
+    }))
+  }, [sites, fuels, fleet, electricity])
 
   const highest = useMemo(() => {
-    let bestId: string | null = null
+    let best: typeof perSiteChartData[number] | null = null
     let bestVal = 0
-    perSite.forEach((v, k) => { if (v > bestVal) { bestVal = v; bestId = k } })
-    return bestId ? { site: sites.find(s => s.id === bestId), tons: bestVal } : null
-  }, [perSite, sites])
+    perSiteChartData.forEach(d => {
+      const v = d.scope1Fuels + d.scope1Fleet + d.scope2
+      if (v > bestVal) { bestVal = v; best = d }
+    })
+    return best
+      ? { name: (best as any).site as string, tons: bestVal }
+      : null
+  }, [perSiteChartData])
+
+  const benchmark = sectorBenchmark(company.sector)
 
   const overallSteps = [
     { label: 'Company profile complete',     done: companyPct === 100, to: '/company' },
@@ -118,6 +130,8 @@ export default function Dashboard() {
     { label: 'Scope 2 emissions',       value: scope2Total > 0 ? fmt(scope2Total) : '—', hint: 'Electricity' },
     { label: 'Renewable electricity %', value: elec.totalKwh > 0 ? `${fmt(elec.renewablePct, 1)}%` : '—', hint: 'Of total electricity' },
   ]
+
+  const hasData = totalGHG > 0
 
   return (
     <div className="space-y-8">
@@ -190,14 +204,106 @@ export default function Dashboard() {
         </div>
       </section>
 
+      {/* Charts row 1 */}
+      <section className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 lg:col-span-2">
+          <div className="flex items-center gap-2 mb-2">
+            <PieIcon size={16} className="text-brand-600" />
+            <h3 className="text-sm font-semibold text-slate-900">Emissions by scope</h3>
+          </div>
+          <p className="text-xs text-slate-500 mb-3">Share of total GHG across the three reporting streams.</p>
+          <ScopeDonut scope1Fuels={scope1Fuels} scope1Fleet={scope1Fleet} scope2={scope2Total} />
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 lg:col-span-3">
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 size={16} className="text-brand-600" />
+            <h3 className="text-sm font-semibold text-slate-900">Emissions by site</h3>
+          </div>
+          <p className="text-xs text-slate-500 mb-3">Stacked by scope, so you can spot hotspots across locations.</p>
+          <PerSiteStackedBar data={perSiteChartData} />
+        </div>
+      </section>
+
+      {/* Charts row 2: benchmark + renewable ring */}
+      <section className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 lg:col-span-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Target size={16} className="text-brand-600" />
+            <h3 className="text-sm font-semibold text-slate-900">Sector benchmark</h3>
+            {company.sector && <span className="text-xs text-slate-500">— {company.sector}</span>}
+          </div>
+          <p className="text-xs text-slate-500 mb-3">
+            Your total emissions vs. the average for partners in the same sector (illustrative).
+          </p>
+          {hasData && company.sector ? (
+            <SectorBenchmark partner={totalGHG} sectorAvg={benchmark} label={company.name || 'Your company'} />
+          ) : (
+            <div className="h-48 flex flex-col items-center justify-center text-sm text-slate-400 text-center px-4">
+              {!company.sector
+                ? <>Set your <Link to="/company" className="text-brand-700 underline mx-1">sector</Link> to see how you compare.</>
+                : 'Add emissions data to see how you compare.'}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-5 lg:col-span-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Leaf size={16} className="text-emerald-600" />
+            <h3 className="text-sm font-semibold text-slate-900">Renewable electricity</h3>
+          </div>
+          <p className="text-xs text-slate-500 mb-4">
+            Combined share of purchased + on-site renewable electricity.
+          </p>
+          {elec.totalKwh > 0 ? (
+            <>
+              <div className="flex items-center justify-center my-4">
+                <div className="relative w-32 h-32">
+                  <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" strokeWidth="3" />
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#10b981" strokeWidth="3"
+                            strokeDasharray={`${elec.renewablePct}, 100`} strokeLinecap="round" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-2xl font-semibold text-emerald-700 tabular-nums">
+                      {fmt(elec.renewablePct, 0)}%
+                    </div>
+                    <div className="text-[10px] text-slate-500 uppercase tracking-wider">renewable</div>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div>
+                  <div className="text-slate-500">Grid</div>
+                  <div className="font-medium text-slate-800 tabular-nums">{fmt(elec.grid, 0)}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Purchased</div>
+                  <div className="font-medium text-emerald-700 tabular-nums">{fmt(elec.purchased, 0)}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">On-site</div>
+                  <div className="font-medium text-emerald-700 tabular-nums">{fmt(elec.onsite, 0)}</div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="h-48 flex items-center justify-center text-sm text-slate-400">
+              No electricity data yet.
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Highest emitting site */}
-      {highest && highest.site && (
+      {highest && (
         <section className="bg-white border border-slate-200 rounded-xl p-5">
           <div className="text-xs uppercase tracking-wider text-slate-500">Highest emitting site</div>
           <div className="mt-1 flex items-center justify-between">
             <div>
-              <div className="text-lg font-semibold text-slate-900">{highest.site.name}</div>
-              <div className="text-xs text-slate-500">{highest.site.city}, {highest.site.country}</div>
+              <div className="text-lg font-semibold text-slate-900">{highest.name}</div>
+              <div className="text-xs text-slate-500">
+                {((highest.tons / totalGHG) * 100).toFixed(0)}% of total emissions
+              </div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-semibold text-brand-700 tabular-nums">{fmt(highest.tons)}</div>
