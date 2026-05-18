@@ -3,6 +3,8 @@ import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import Placeholder from './components/Placeholder'
 import Dashboard from './pages/Dashboard'
+import CompanyProfile from './pages/CompanyProfile'
+import Sites from './pages/Sites'
 import { useRole } from './lib/useRole'
 import './App.css'
 
@@ -18,8 +20,8 @@ function App() {
           <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/company" element={<Placeholder title="Company Profile" description="Legal entity, sector, contact person, country, business description." />} />
-              <Route path="/sites" element={<Placeholder title="Sites" description="Add one or more sites with city, country, floor area and ownership type." />} />
+              <Route path="/company" element={<CompanyProfile />} />
+              <Route path="/sites" element={<Sites />} />
               <Route path="/scope1-fuels" element={<Placeholder title="Scope 1 – Fuels" description="Natural gas, diesel, LPG, propane consumption per site." />} />
               <Route path="/scope1-fleet" element={<Placeholder title="Scope 1 – Fleet" description="Vehicle type, fuel type, number of vehicles, kilometres driven." />} />
               <Route path="/scope2-electricity" element={<Placeholder title="Scope 2 – Electricity" description="Grid, purchased renewable and on-site renewable generation." />} />
