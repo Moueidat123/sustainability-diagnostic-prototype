@@ -63,6 +63,7 @@ export const KEYS = {
   fleet: 'sdp.fleet',
   electricity: 'sdp.electricity',
   workflow: 'sdp.workflow',
+  accreditation: 'sdp.accreditation',
 } as const
 
 export function companyCompletion(c: Company): number {

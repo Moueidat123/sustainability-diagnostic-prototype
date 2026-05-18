@@ -9,6 +9,7 @@ import Scope1Fuels from './pages/Scope1Fuels'
 import Scope1Fleet from './pages/Scope1Fleet'
 import Scope2Electricity from './pages/Scope2Electricity'
 import Review from './pages/Review'
+import Accreditation from './pages/Accreditation'
 import { useRole } from './lib/useRole'
 import './App.css'
 
@@ -30,7 +31,7 @@ function App() {
               <Route path="/scope1-fleet" element={<Scope1Fleet />} />
               <Route path="/scope2-electricity" element={<Scope2Electricity />} />
               <Route path="/review" element={<Review />} />
-              <Route path="/accreditation" element={<Placeholder title="Accreditation" description="Categories, Essential / Advanced / Elite tiers, launch stages." />} />
+              <Route path="/accreditation" element={<Accreditation />} />
               <Route path="/reports" element={<Placeholder title="Reports & Export" description="PDF and Excel downloads of diagnostic results." />} />
               <Route path="/admin" element={<Placeholder title="Admin" description="Manage emission factors, master lists and user permissions." />} />
             </Routes>
