@@ -1,0 +1,38 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Sidebar from './components/Sidebar'
+import Header from './components/Header'
+import Placeholder from './components/Placeholder'
+import Dashboard from './pages/Dashboard'
+import { useRole } from './lib/useRole'
+import './App.css'
+
+function App() {
+  const { role, setRole } = useRole()
+
+  return (
+    <BrowserRouter basename="/sustainability-diagnostic-prototype">
+      <div className="flex h-screen">
+        <Sidebar role={role} />
+        <div className="flex-1 flex flex-col min-w-0">
+          <Header role={role} setRole={setRole} />
+          <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/company" element={<Placeholder title="Company Profile" description="Legal entity, sector, contact person, country, business description." />} />
+              <Route path="/sites" element={<Placeholder title="Sites" description="Add one or more sites with city, country, floor area and ownership type." />} />
+              <Route path="/scope1-fuels" element={<Placeholder title="Scope 1 – Fuels" description="Natural gas, diesel, LPG, propane consumption per site." />} />
+              <Route path="/scope1-fleet" element={<Placeholder title="Scope 1 – Fleet" description="Vehicle type, fuel type, number of vehicles, kilometres driven." />} />
+              <Route path="/scope2-electricity" element={<Placeholder title="Scope 2 – Electricity" description="Grid, purchased renewable and on-site renewable generation." />} />
+              <Route path="/review" element={<Placeholder title="Review & Workflow" description="Reviewer comments, status tracking, approval flow." />} />
+              <Route path="/accreditation" element={<Placeholder title="Accreditation" description="Categories, Essential / Advanced / Elite tiers, launch stages." />} />
+              <Route path="/reports" element={<Placeholder title="Reports & Export" description="PDF and Excel downloads of diagnostic results." />} />
+              <Route path="/admin" element={<Placeholder title="Admin" description="Manage emission factors, master lists and user permissions." />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </BrowserRouter>
+  )
+}
+
+export default App
