@@ -73,3 +73,39 @@ export function fleetEmissionsTons(
   if (!consumed) return 0
   return (f.kgCO2ePerUnit * consumed) / 1000
 }
+
+// ============================================================
+// Scope 2 — Electricity grid factors
+// kgCO2e per kWh of grid electricity, by country (illustrative).
+// In the real product these are admin-managed per reporting year.
+// ============================================================
+
+export const GRID_FACTORS: Record<string, number> = {
+  'Saudi Arabia':         0.732,
+  'United Arab Emirates': 0.490,
+  'Bahrain':              0.747,
+  'Kuwait':               0.617,
+  'Oman':                 0.532,
+  'Qatar':                0.490,
+  'Egypt':                0.460,
+  'Jordan':               0.482,
+  'Lebanon':              0.642,
+  'United Kingdom':       0.207,
+  'United States':        0.371,
+  'Other':                0.500,
+}
+
+export const GRID_FACTOR_VERSION = 'IFI / IEA 2023 averages (illustrative)'
+
+/** Grid factor (kgCO2e per kWh) for a country, with a safe fallback. */
+export function gridFactor(country: string): number {
+  return GRID_FACTORS[country] ?? GRID_FACTORS['Other']
+}
+
+/** Scope 2 electricity emissions in tCO2e.
+ *  Convention: grid kWh uses country grid factor; renewable kWh = 0.
+ */
+export function electricityEmissionsTons(country: string, gridKwh: number): number {
+  if (!Number.isFinite(gridKwh) || gridKwh <= 0) return 0
+  return (gridFactor(country) * gridKwh) / 1000
+}

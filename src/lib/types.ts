@@ -46,11 +46,22 @@ export type FleetEntry = {
   note?: string
 }
 
+export type ElectricityEntry = {
+  id: string
+  siteId: string
+  country: string                    // defaults to site country, used for grid factor
+  gridKwh: number | ''               // non-renewable grid electricity
+  purchasedRenewableKwh: number | '' // green tariff / RECs
+  onsiteRenewableKwh: number | ''    // solar PV, wind, etc.
+  note?: string
+}
+
 export const KEYS = {
   company: 'sdp.company',
   sites: 'sdp.sites',
   fuels: 'sdp.fuels',
   fleet: 'sdp.fleet',
+  electricity: 'sdp.electricity',
 } as const
 
 export function companyCompletion(c: Company): number {
