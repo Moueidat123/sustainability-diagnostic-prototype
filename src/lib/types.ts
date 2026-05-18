@@ -49,10 +49,10 @@ export type FleetEntry = {
 export type ElectricityEntry = {
   id: string
   siteId: string
-  country: string                    // defaults to site country, used for grid factor
-  gridKwh: number | ''               // non-renewable grid electricity
-  purchasedRenewableKwh: number | '' // green tariff / RECs
-  onsiteRenewableKwh: number | ''    // solar PV, wind, etc.
+  country: string
+  gridKwh: number | ''
+  purchasedRenewableKwh: number | ''
+  onsiteRenewableKwh: number | ''
   note?: string
 }
 
@@ -62,6 +62,7 @@ export const KEYS = {
   fuels: 'sdp.fuels',
   fleet: 'sdp.fleet',
   electricity: 'sdp.electricity',
+  workflow: 'sdp.workflow',
 } as const
 
 export function companyCompletion(c: Company): number {
@@ -70,4 +71,57 @@ export function companyCompletion(c: Company): number {
   ]
   const filled = required.filter(k => String(c[k] ?? '').trim() !== '').length
   return Math.round((filled / required.length) * 100)
+}
+
+// ---------- Review & Workflow ----------
+
+export type WorkflowStatus = 'draft' | 'submitted' | 'changes_requested' | 'approved'
+
+export type ReviewSection =
+  | 'company' | 'sites' | 'fuels' | 'fleet' | 'electricity' | 'general'
+
+export type ReviewComment = {
+  id: string
+  section: ReviewSection
+  author: string       // role id
+  authorLabel: string  // friendly label
+  text: string
+  ts: number
+  resolved?: boolean
+}
+
+export type WorkflowEvent = {
+  id: string
+  ts: number
+  actor: string
+  actorLabel: string
+  type:
+    | 'submitted'
+    | 'changes_requested'
+    | 'approval_recommended'
+    | 'approved'
+    | 'reopened'
+    | 'comment'
+  note?: string
+}
+
+export type Workflow = {
+  status: WorkflowStatus
+  submittedAt?: number
+  approvedAt?: number
+  comments: ReviewComment[]
+  events: WorkflowEvent[]
+}
+
+export const EMPTY_WORKFLOW: Workflow = {
+  status: 'draft',
+  comments: [],
+  events: [],
+}
+
+export const STATUS_LABEL: Record<WorkflowStatus, string> = {
+  draft: 'Draft',
+  submitted: 'Submitted for review',
+  changes_requested: 'Changes requested',
+  approved: 'Approved',
 }
