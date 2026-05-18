@@ -11,15 +11,9 @@ export type Company = {
 }
 
 export const EMPTY_COMPANY: Company = {
-  name: '',
-  legalEntity: '',
-  sector: '',
-  country: '',
-  reportingYear: '2025',
-  contactName: '',
-  contactEmail: '',
-  contactPhone: '',
-  description: '',
+  name: '', legalEntity: '', sector: '', country: '',
+  reportingYear: '2025', contactName: '', contactEmail: '',
+  contactPhone: '', description: '',
 }
 
 export type Site = {
@@ -34,23 +28,34 @@ export type Site = {
 export type FuelEntry = {
   id: string
   siteId: string
-  fuelId: string          // references FUEL_FACTORS
+  fuelId: string
   quantity: number | ''
   note?: string
 }
 
-/** Storage keys (single source of truth) */
+export type FleetEntry = {
+  id: string
+  siteId: string
+  vehicleType: string
+  fuelId: string
+  vehicleCount: number | ''
+  mode: 'fuel' | 'distance'
+  quantity: number | ''
+  kmDriven: number | ''
+  consumptionPer100km: number | ''
+  note?: string
+}
+
 export const KEYS = {
   company: 'sdp.company',
   sites: 'sdp.sites',
   fuels: 'sdp.fuels',
+  fleet: 'sdp.fleet',
 } as const
 
-/** % of required Company fields completed (0-100) */
 export function companyCompletion(c: Company): number {
   const required: (keyof Company)[] = [
-    'name', 'legalEntity', 'sector', 'country',
-    'reportingYear', 'contactName', 'contactEmail',
+    'name','legalEntity','sector','country','reportingYear','contactName','contactEmail',
   ]
   const filled = required.filter(k => String(c[k] ?? '').trim() !== '').length
   return Math.round((filled / required.length) * 100)

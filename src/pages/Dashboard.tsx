@@ -7,9 +7,9 @@ import {
 import { useLocalState } from '../lib/storage'
 import {
   EMPTY_COMPANY, KEYS, companyCompletion,
-  type Company, type Site, type FuelEntry,
+  type Company, type Site, type FuelEntry, type FleetEntry,
 } from '../lib/types'
-import { fuelEmissionsTons } from '../lib/emissionFactors'
+import { fuelEmissionsTons, fleetEmissionsTons } from '../lib/emissionFactors'
 
 const MODULES = [
   { to: '/company',            icon: Building2,      title: 'Company Profile',       desc: 'Legal entity, sector & contact info.' },
@@ -29,30 +29,48 @@ function fmt(n: number, digits = 2) {
 
 export default function Dashboard() {
   const [company] = useLocalState<Company>(KEYS.company, EMPTY_COMPANY)
-  const [sites] = useLocalState<Site[]>(KEYS.sites, [])
-  const [fuels] = useLocalState<FuelEntry[]>(KEYS.fuels, [])
+  const [sites]   = useLocalState<Site[]>(KEYS.sites, [])
+  const [fuels]   = useLocalState<FuelEntry[]>(KEYS.fuels, [])
+  const [fleet]   = useLocalState<FleetEntry[]>(KEYS.fleet, [])
 
   const companyPct = companyCompletion(company)
-  const sitesDone = sites.length > 0
-  const fuelsDone = fuels.length > 0
+  const sitesDone  = sites.length > 0
+  const fuelsDone  = fuels.length > 0
+  const fleetDone  = fleet.length > 0
 
-  // Scope 1 – Fuels totals
   const scope1Fuels = useMemo(
     () => fuels.reduce((s, e) => s + fuelEmissionsTons(e.fuelId, Number(e.quantity || 0)), 0),
     [fuels]
   )
-  const scope1Total = scope1Fuels // + fleet later
-  const scope2Total = 0           // electricity later
+  const scope1Fleet = useMemo(
+    () => fleet.reduce((s, e) => s + fleetEmissionsTons(
+      e.fuelId, e.mode,
+      Number(e.quantity || 0),
+      Number(e.kmDriven || 0),
+      Number(e.consumptionPer100km || 0),
+    ), 0),
+    [fleet]
+  )
+  const scope1Total = scope1Fuels + scope1Fleet
+  const scope2Total = 0
   const totalGHG    = scope1Total + scope2Total
 
-  // Highest emitting site (FR-014 highest emitting)
   const perSite = useMemo(() => {
     const m = new Map<string, number>()
     fuels.forEach(e => {
       m.set(e.siteId, (m.get(e.siteId) ?? 0) + fuelEmissionsTons(e.fuelId, Number(e.quantity || 0)))
     })
+    fleet.forEach(e => {
+      const t = fleetEmissionsTons(
+        e.fuelId, e.mode,
+        Number(e.quantity || 0),
+        Number(e.kmDriven || 0),
+        Number(e.consumptionPer100km || 0),
+      )
+      m.set(e.siteId, (m.get(e.siteId) ?? 0) + t)
+    })
     return m
-  }, [fuels])
+  }, [fuels, fleet])
 
   const highest = useMemo(() => {
     let bestId: string | null = null
@@ -65,7 +83,7 @@ export default function Dashboard() {
     { label: 'Company profile complete',     done: companyPct === 100, to: '/company' },
     { label: 'At least one site added',      done: sitesDone,          to: '/sites' },
     { label: 'Scope 1 fuels entered',        done: fuelsDone,          to: '/scope1-fuels' },
-    { label: 'Scope 1 fleet entered',        done: false,              to: '/scope1-fleet' },
+    { label: 'Scope 1 fleet entered',        done: fleetDone,          to: '/scope1-fleet' },
     { label: 'Scope 2 electricity entered',  done: false,              to: '/scope2-electricity' },
   ]
   const overallPct = Math.round((overallSteps.filter(s => s.done).length / overallSteps.length) * 100)
@@ -162,20 +180,18 @@ export default function Dashboard() {
             </div>
             <div className="text-right">
               <div className="text-2xl font-semibold text-brand-700 tabular-nums">{fmt(highest.tons)}</div>
-              <div className="text-[11px] text-slate-500">tCO₂e (Scope 1 fuels so far)</div>
+              <div className="text-[11px] text-slate-500">tCO₂e (Scope 1 so far)</div>
             </div>
           </div>
         </section>
       )}
 
       {/* Quick stats */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Link to="/company" className="bg-white border border-slate-200 rounded-lg p-5 hover:border-brand-500 hover:shadow-sm transition flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-wider text-slate-500">Company profile</div>
-            <div className="text-lg font-semibold text-slate-900 mt-1">
-              {company.name || 'Not started'}
-            </div>
+            <div className="text-xs uppercase tracking-wider text-slate-500">Company</div>
+            <div className="text-base font-semibold text-slate-900 mt-1 truncate">{company.name || 'Not started'}</div>
             <div className="text-xs text-slate-500 mt-0.5">{companyPct}% complete</div>
           </div>
           <ArrowRight size={18} className="text-slate-300" />
@@ -183,22 +199,32 @@ export default function Dashboard() {
         <Link to="/sites" className="bg-white border border-slate-200 rounded-lg p-5 hover:border-brand-500 hover:shadow-sm transition flex items-center justify-between">
           <div>
             <div className="text-xs uppercase tracking-wider text-slate-500">Sites</div>
-            <div className="text-lg font-semibold text-slate-900 mt-1">
-              {sites.length === 0 ? 'No sites yet' : `${sites.length} site${sites.length === 1 ? '' : 's'}`}
+            <div className="text-base font-semibold text-slate-900 mt-1">
+              {sites.length === 0 ? 'No sites' : `${sites.length} site${sites.length === 1 ? '' : 's'}`}
             </div>
-            <div className="text-xs text-slate-500 mt-0.5">
-              {sites.slice(0, 3).map(s => s.name).join(' · ') || 'Add your first site'}
+            <div className="text-xs text-slate-500 mt-0.5 truncate">
+              {sites.slice(0, 2).map(s => s.name).join(' · ') || 'Add your first site'}
             </div>
           </div>
           <ArrowRight size={18} className="text-slate-300" />
         </Link>
         <Link to="/scope1-fuels" className="bg-white border border-slate-200 rounded-lg p-5 hover:border-brand-500 hover:shadow-sm transition flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-wider text-slate-500">Scope 1 – Fuels</div>
-            <div className="text-lg font-semibold text-slate-900 mt-1 tabular-nums">
+            <div className="text-xs uppercase tracking-wider text-slate-500">S1 Fuels</div>
+            <div className="text-base font-semibold text-slate-900 mt-1 tabular-nums">
               {scope1Fuels > 0 ? `${fmt(scope1Fuels)} tCO₂e` : 'No entries'}
             </div>
             <div className="text-xs text-slate-500 mt-0.5">{fuels.length} entr{fuels.length === 1 ? 'y' : 'ies'}</div>
+          </div>
+          <ArrowRight size={18} className="text-slate-300" />
+        </Link>
+        <Link to="/scope1-fleet" className="bg-white border border-slate-200 rounded-lg p-5 hover:border-brand-500 hover:shadow-sm transition flex items-center justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-slate-500">S1 Fleet</div>
+            <div className="text-base font-semibold text-slate-900 mt-1 tabular-nums">
+              {scope1Fleet > 0 ? `${fmt(scope1Fleet)} tCO₂e` : 'No entries'}
+            </div>
+            <div className="text-xs text-slate-500 mt-0.5">{fleet.length} entr{fleet.length === 1 ? 'y' : 'ies'}</div>
           </div>
           <ArrowRight size={18} className="text-slate-300" />
         </Link>
