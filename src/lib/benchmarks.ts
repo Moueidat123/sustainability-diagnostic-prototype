@@ -1,3 +1,4 @@
+import { benchmarkOverride } from './adminOverrides'
 // Illustrative sector benchmarks (tCO2e per company per year).
 // Will be admin-managed in the real product.
 export const SECTOR_BENCHMARKS: Record<string, number> = {
@@ -17,5 +18,7 @@ export const SECTOR_BENCHMARKS: Record<string, number> = {
 }
 
 export function sectorBenchmark(sector: string): number {
+  const ov = benchmarkOverride.get()[sector]
+  if (Number.isFinite(ov)) return ov as number
   return SECTOR_BENCHMARKS[sector] ?? SECTOR_BENCHMARKS['Other']
 }

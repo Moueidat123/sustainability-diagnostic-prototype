@@ -1,3 +1,5 @@
+import { fuelOverride, gridOverride } from './adminOverrides'
+
 export type FuelUnit = 'litre' | 'm3' | 'kg' | 'kWh'
 
 export type FuelFactor = {
@@ -38,7 +40,10 @@ export const VEHICLE_TYPES = [
 export const FUEL_FACTOR_VERSION = 'Defaults v1.0 (DEFRA/IPCC illustrative)'
 
 export function findFuel(id: string): FuelFactor | undefined {
-  return [...FUEL_FACTORS, ...VEHICLE_FUELS].find(f => f.id === id)
+  const base = [...FUEL_FACTORS, ...VEHICLE_FUELS].find(f => f.id === id)
+  if (!base) return undefined
+  const ov = fuelOverride.get()[id]
+  return Number.isFinite(ov) ? { ...base, kgCO2ePerUnit: ov as number } : base
 }
 
 export function fuelEmissionsTons(fuelId: string, quantity: number): number {
@@ -99,6 +104,8 @@ export const GRID_FACTOR_VERSION = 'IFI / IEA 2023 averages (illustrative)'
 
 /** Grid factor (kgCO2e per kWh) for a country, with a safe fallback. */
 export function gridFactor(country: string): number {
+  const ov = gridOverride.get()[country]
+  if (Number.isFinite(ov)) return ov as number
   return GRID_FACTORS[country] ?? GRID_FACTORS['Other']
 }
 
