@@ -5,6 +5,7 @@ import Placeholder from './components/Placeholder'
 import Dashboard from './pages/Dashboard'
 import CompanyProfile from './pages/CompanyProfile'
 import Sites from './pages/Sites'
+import Scope1Fuels from './pages/Scope1Fuels'
 import { useRole } from './lib/useRole'
 import './App.css'
 
@@ -22,7 +23,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/company" element={<CompanyProfile />} />
               <Route path="/sites" element={<Sites />} />
-              <Route path="/scope1-fuels" element={<Placeholder title="Scope 1 – Fuels" description="Natural gas, diesel, LPG, propane consumption per site." />} />
+              <Route path="/scope1-fuels" element={<Scope1Fuels />} />
               <Route path="/scope1-fleet" element={<Placeholder title="Scope 1 – Fleet" description="Vehicle type, fuel type, number of vehicles, kilometres driven." />} />
               <Route path="/scope2-electricity" element={<Placeholder title="Scope 2 – Electricity" description="Grid, purchased renewable and on-site renewable generation." />} />
               <Route path="/review" element={<Placeholder title="Review & Workflow" description="Reviewer comments, status tracking, approval flow." />} />

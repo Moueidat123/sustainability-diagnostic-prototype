@@ -1,17 +1,15 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Building2, MapPin, Flame, Truck, Zap, FileBarChart,
   ClipboardCheck, Award, Settings, ArrowRight, CheckCircle2, Circle,
 } from 'lucide-react'
 import { useLocalState } from '../lib/storage'
-import { EMPTY_COMPANY, KEYS, companyCompletion, type Company, type Site } from '../lib/types'
-
-const KPIS = [
-  { label: 'Total GHG (tCO₂e)',       value: '—', hint: 'Scope 1 + Scope 2' },
-  { label: 'Scope 1 emissions',       value: '—', hint: 'Fuels + Fleet' },
-  { label: 'Scope 2 emissions',       value: '—', hint: 'Electricity' },
-  { label: 'Renewable electricity %', value: '—', hint: 'Of total electricity' },
-]
+import {
+  EMPTY_COMPANY, KEYS, companyCompletion,
+  type Company, type Site, type FuelEntry,
+} from '../lib/types'
+import { fuelEmissionsTons } from '../lib/emissionFactors'
 
 const MODULES = [
   { to: '/company',            icon: Building2,      title: 'Company Profile',       desc: 'Legal entity, sector & contact info.' },
@@ -25,22 +23,59 @@ const MODULES = [
   { to: '/admin',              icon: Settings,       title: 'Admin',                 desc: 'Emission factors & master lists.' },
 ]
 
+function fmt(n: number, digits = 2) {
+  return n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })
+}
+
 export default function Dashboard() {
   const [company] = useLocalState<Company>(KEYS.company, EMPTY_COMPANY)
   const [sites] = useLocalState<Site[]>(KEYS.sites, [])
+  const [fuels] = useLocalState<FuelEntry[]>(KEYS.fuels, [])
 
   const companyPct = companyCompletion(company)
   const sitesDone = sites.length > 0
-  const overallSteps = [
-    { label: 'Company profile complete', done: companyPct === 100, to: '/company' },
-    { label: 'At least one site added',  done: sitesDone,           to: '/sites' },
-    { label: 'Scope 1 fuels entered',    done: false,               to: '/scope1-fuels' },
-    { label: 'Scope 1 fleet entered',    done: false,               to: '/scope1-fleet' },
-    { label: 'Scope 2 electricity entered', done: false,            to: '/scope2-electricity' },
-  ]
-  const overallPct = Math.round(
-    (overallSteps.filter(s => s.done).length / overallSteps.length) * 100
+  const fuelsDone = fuels.length > 0
+
+  // Scope 1 – Fuels totals
+  const scope1Fuels = useMemo(
+    () => fuels.reduce((s, e) => s + fuelEmissionsTons(e.fuelId, Number(e.quantity || 0)), 0),
+    [fuels]
   )
+  const scope1Total = scope1Fuels // + fleet later
+  const scope2Total = 0           // electricity later
+  const totalGHG    = scope1Total + scope2Total
+
+  // Highest emitting site (FR-014 highest emitting)
+  const perSite = useMemo(() => {
+    const m = new Map<string, number>()
+    fuels.forEach(e => {
+      m.set(e.siteId, (m.get(e.siteId) ?? 0) + fuelEmissionsTons(e.fuelId, Number(e.quantity || 0)))
+    })
+    return m
+  }, [fuels])
+
+  const highest = useMemo(() => {
+    let bestId: string | null = null
+    let bestVal = 0
+    perSite.forEach((v, k) => { if (v > bestVal) { bestVal = v; bestId = k } })
+    return bestId ? { site: sites.find(s => s.id === bestId), tons: bestVal } : null
+  }, [perSite, sites])
+
+  const overallSteps = [
+    { label: 'Company profile complete',     done: companyPct === 100, to: '/company' },
+    { label: 'At least one site added',      done: sitesDone,          to: '/sites' },
+    { label: 'Scope 1 fuels entered',        done: fuelsDone,          to: '/scope1-fuels' },
+    { label: 'Scope 1 fleet entered',        done: false,              to: '/scope1-fleet' },
+    { label: 'Scope 2 electricity entered',  done: false,              to: '/scope2-electricity' },
+  ]
+  const overallPct = Math.round((overallSteps.filter(s => s.done).length / overallSteps.length) * 100)
+
+  const KPIS = [
+    { label: 'Total GHG (tCO₂e)',       value: totalGHG    > 0 ? fmt(totalGHG)    : '—', hint: 'Scope 1 + Scope 2' },
+    { label: 'Scope 1 emissions',       value: scope1Total > 0 ? fmt(scope1Total) : '—', hint: 'Fuels + Fleet' },
+    { label: 'Scope 2 emissions',       value: scope2Total > 0 ? fmt(scope2Total) : '—', hint: 'Electricity' },
+    { label: 'Renewable electricity %', value: '—', hint: 'Of total electricity' },
+  ]
 
   return (
     <div className="space-y-8">
@@ -106,18 +141,35 @@ export default function Dashboard() {
           {KPIS.map(k => (
             <div key={k.label} className="bg-white border border-slate-200 rounded-lg p-4">
               <div className="text-xs text-slate-500">{k.label}</div>
-              <div className="text-2xl font-semibold text-slate-900 mt-1">{k.value}</div>
+              <div className="text-2xl font-semibold text-slate-900 mt-1 tabular-nums">{k.value}</div>
               <div className="text-[11px] text-slate-400 mt-1">{k.hint}</div>
             </div>
           ))}
         </div>
         <p className="text-xs text-slate-400 mt-2">
-          Values appear once Scope 1 &amp; Scope 2 data is entered (coming in the next steps).
+          Scope 2 + Renewable % will appear once electricity data is entered.
         </p>
       </section>
 
+      {/* Highest emitting site */}
+      {highest && highest.site && (
+        <section className="bg-white border border-slate-200 rounded-xl p-5">
+          <div className="text-xs uppercase tracking-wider text-slate-500">Highest emitting site</div>
+          <div className="mt-1 flex items-center justify-between">
+            <div>
+              <div className="text-lg font-semibold text-slate-900">{highest.site.name}</div>
+              <div className="text-xs text-slate-500">{highest.site.city}, {highest.site.country}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-semibold text-brand-700 tabular-nums">{fmt(highest.tons)}</div>
+              <div className="text-[11px] text-slate-500">tCO₂e (Scope 1 fuels so far)</div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Quick stats */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link to="/company" className="bg-white border border-slate-200 rounded-lg p-5 hover:border-brand-500 hover:shadow-sm transition flex items-center justify-between">
           <div>
             <div className="text-xs uppercase tracking-wider text-slate-500">Company profile</div>
@@ -137,6 +189,16 @@ export default function Dashboard() {
             <div className="text-xs text-slate-500 mt-0.5">
               {sites.slice(0, 3).map(s => s.name).join(' · ') || 'Add your first site'}
             </div>
+          </div>
+          <ArrowRight size={18} className="text-slate-300" />
+        </Link>
+        <Link to="/scope1-fuels" className="bg-white border border-slate-200 rounded-lg p-5 hover:border-brand-500 hover:shadow-sm transition flex items-center justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-slate-500">Scope 1 – Fuels</div>
+            <div className="text-lg font-semibold text-slate-900 mt-1 tabular-nums">
+              {scope1Fuels > 0 ? `${fmt(scope1Fuels)} tCO₂e` : 'No entries'}
+            </div>
+            <div className="text-xs text-slate-500 mt-0.5">{fuels.length} entr{fuels.length === 1 ? 'y' : 'ies'}</div>
           </div>
           <ArrowRight size={18} className="text-slate-300" />
         </Link>

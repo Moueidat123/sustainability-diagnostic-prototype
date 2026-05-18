@@ -31,10 +31,19 @@ export type Site = {
   floorArea: number | ''
 }
 
+export type FuelEntry = {
+  id: string
+  siteId: string
+  fuelId: string          // references FUEL_FACTORS
+  quantity: number | ''
+  note?: string
+}
+
 /** Storage keys (single source of truth) */
 export const KEYS = {
   company: 'sdp.company',
   sites: 'sdp.sites',
+  fuels: 'sdp.fuels',
 } as const
 
 /** % of required Company fields completed (0-100) */
