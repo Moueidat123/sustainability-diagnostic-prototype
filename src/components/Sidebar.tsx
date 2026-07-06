@@ -16,7 +16,7 @@ const ITEMS: Item[] = [
   { to: '/scope1-fuels',       label: 'Scope 1 – Fuels',       icon: Flame,           roles: ['partner','reviewer','program_manager'] },
   { to: '/scope1-fleet',       label: 'Scope 1 – Fleet',       icon: Truck,           roles: ['partner','reviewer','program_manager'] },
   { to: '/scope2-electricity', label: 'Scope 2 – Electricity', icon: Zap,             roles: ['partner','reviewer','program_manager'] },
-  { to: '/review',             label: 'Review & Workflow',     icon: ClipboardCheck,  roles: ['reviewer','program_manager'] },
+  { to: '/review',             label: 'Review & Workflow',     icon: ClipboardCheck,  roles: ['partner','reviewer','program_manager'] },
   { to: '/accreditation',      label: 'Accreditation',         icon: Award,           roles: ['program_manager','reviewer'] },
   { to: '/reports',            label: 'Reports & Export',      icon: FileBarChart,    roles: ['partner','reviewer','program_manager','viewer'] },
   { to: '/admin',              label: 'Admin',                 icon: Settings,        roles: ['admin'] },
