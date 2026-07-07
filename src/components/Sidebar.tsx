@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, MapPin, Flame, Truck,
-  Zap, ClipboardCheck, Settings, FileBarChart, Award,
+  Zap, ClipboardCheck, Settings, FileBarChart, Award, X,
 } from 'lucide-react'
 import clsx from 'clsx'
 import type { Role } from '../lib/roles'
@@ -26,56 +26,85 @@ const BASE = import.meta.env.BASE_URL
 // Prefer the real PNG once provided, fall back to the temporary SVG placeholder.
 const LOGO_CANDIDATES = [`${BASE}logo.png`, `${BASE}logo.svg`]
 
-export default function Sidebar({ role }: { role: Role }) {
+export default function Sidebar({ role, open, onClose }: { role: Role; open: boolean; onClose: () => void }) {
   const items = ITEMS.filter(i => i.roles.includes(role))
   const [idx, setIdx] = useState(0)
   const failed = idx >= LOGO_CANDIDATES.length
 
   return (
-    <aside className="w-64 shrink-0 bg-white border-r border-slate-200 flex flex-col">
-      {/* Brand */}
-      <div className="px-5 py-5 border-b border-slate-200">
-        {!failed ? (
-          <img
-            src={LOGO_CANDIDATES[idx]}
-            alt="Aramco Taleed"
-            className="h-9 w-auto"
-            onError={() => setIdx(i => i + 1)}
-          />
-        ) : (
-          <div>
-            <div className="text-[11px] uppercase tracking-wider text-slate-500">Aramco</div>
-            <div className="text-xl font-semibold text-brand-700">Taleed</div>
-          </div>
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className={clsx(
+          'fixed inset-0 z-30 bg-black/40 lg:hidden transition-opacity',
+          open ? 'opacity-100' : 'opacity-0 pointer-events-none',
         )}
-        <div className="text-[11px] text-slate-400 mt-2">Sustainability Diagnostic</div>
-      </div>
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-      {/* Navigation */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-        {items.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className={({ isActive }) =>
-              clsx(
-                'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition',
-                isActive
-                  ? 'bg-brand-50 text-brand-700 font-medium'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              )
-            }
+      <aside
+        className={clsx(
+          'w-64 shrink-0 bg-white border-r border-slate-200 flex flex-col',
+          'fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0',
+          open ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
+        {/* Brand */}
+        <div className="px-5 py-5 border-b border-slate-200 flex items-start justify-between">
+          <div>
+            {!failed ? (
+              <img
+                src={LOGO_CANDIDATES[idx]}
+                alt="Aramco Taleed"
+                className="h-9 w-auto"
+                onError={() => setIdx(i => i + 1)}
+              />
+            ) : (
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-slate-500">Aramco</div>
+                <div className="text-xl font-semibold text-brand-700">Taleed</div>
+              </div>
+            )}
+            <div className="text-[11px] text-slate-400 mt-2">Sustainability Diagnostic</div>
+          </div>
+          {/* Close button (mobile only) */}
+          <button
+            onClick={onClose}
+            className="lg:hidden text-slate-400 hover:text-slate-700 p-1 -mr-1"
+            aria-label="Close menu"
           >
-            <Icon size={18} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-      </nav>
+            <X size={20} />
+          </button>
+        </div>
 
-      <div className="px-4 py-3 text-[11px] text-slate-400 border-t border-slate-200">
-        Prototype v0.1 · {new Date().getFullYear()}
-      </div>
-    </aside>
+        {/* Navigation */}
+        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+          {items.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              onClick={onClose}
+              className={({ isActive }) =>
+                clsx(
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition',
+                  isActive
+                    ? 'bg-brand-50 text-brand-700 font-medium'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                )
+              }
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="px-4 py-3 text-[11px] text-slate-400 border-t border-slate-200">
+          Prototype v0.1 · {new Date().getFullYear()}
+        </div>
+      </aside>
+    </>
   )
 }

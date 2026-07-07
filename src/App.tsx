@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
@@ -16,14 +17,15 @@ import './App.css'
 
 function App() {
   const { role, setRole } = useRole()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <BrowserRouter basename="/sustainability-diagnostic-prototype">
-      <div className="flex h-screen">
-        <Sidebar role={role} />
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar role={role} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex-1 flex flex-col min-w-0">
-          <Header role={role} setRole={setRole} />
-          <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
+          <Header role={role} setRole={setRole} onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-slate-50">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/company" element={<CompanyProfile />} />

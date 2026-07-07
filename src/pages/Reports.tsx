@@ -286,7 +286,7 @@ export default function Reports() {
         <section className="bg-white border border-slate-200 rounded-xl p-5 print:border-0">
           <h3 className="text-sm font-semibold text-slate-900 mb-3">Sites ({sites.length})</h3>
           {sites.length === 0 ? <div className="text-xs text-slate-400 italic">No sites recorded.</div> : (
-            <table className="w-full text-xs">
+            <div className="overflow-x-auto -mx-1 print:mx-0 print:overflow-visible"><table className="w-full text-xs min-w-[520px] print:min-w-0">
               <thead className="text-slate-500"><tr>
                 <th className="text-left py-1">Name</th><th className="text-left">City</th>
                 <th className="text-left">Country</th><th className="text-left">Ownership</th>
@@ -301,7 +301,7 @@ export default function Reports() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </section>
 
@@ -311,7 +311,7 @@ export default function Reports() {
             Scope 1 — Fuels ({fmt(scope1Fuels)} tCO₂e)
           </h3>
           {fuels.length === 0 ? <div className="text-xs text-slate-400 italic">No fuel entries.</div> : (
-            <table className="w-full text-xs">
+            <div className="overflow-x-auto -mx-1 print:mx-0 print:overflow-visible"><table className="w-full text-xs min-w-[520px] print:min-w-0">
               <thead className="text-slate-500"><tr>
                 <th className="text-left py-1">Site</th><th className="text-left">Fuel</th>
                 <th className="text-right">Quantity</th><th className="text-right">Factor</th>
@@ -332,7 +332,7 @@ export default function Reports() {
                   )
                 })}
               </tbody>
-            </table>
+            </table></div>
           )}
         </section>
 
@@ -342,7 +342,7 @@ export default function Reports() {
             Scope 1 — Fleet ({fmt(scope1Fleet)} tCO₂e)
           </h3>
           {fleet.length === 0 ? <div className="text-xs text-slate-400 italic">No fleet entries.</div> : (
-            <table className="w-full text-xs">
+            <div className="overflow-x-auto -mx-1 print:mx-0 print:overflow-visible"><table className="w-full text-xs min-w-[520px] print:min-w-0">
               <thead className="text-slate-500"><tr>
                 <th className="text-left py-1">Site</th><th className="text-left">Vehicle</th>
                 <th className="text-left">Fuel</th><th className="text-left">Mode</th>
@@ -366,7 +366,7 @@ export default function Reports() {
                   )
                 })}
               </tbody>
-            </table>
+            </table></div>
           )}
         </section>
 
@@ -376,7 +376,7 @@ export default function Reports() {
             Scope 2 — Electricity ({fmt(scope2Total)} tCO₂e · {fmt(elec.renewPct, 1)}% renewable)
           </h3>
           {electricity.length === 0 ? <div className="text-xs text-slate-400 italic">No electricity entries.</div> : (
-            <table className="w-full text-xs">
+            <div className="overflow-x-auto -mx-1 print:mx-0 print:overflow-visible"><table className="w-full text-xs min-w-[520px] print:min-w-0">
               <thead className="text-slate-500"><tr>
                 <th className="text-left py-1">Site</th><th className="text-left">Country</th>
                 <th className="text-right">Grid kWh</th><th className="text-right">Renewable kWh</th>
@@ -398,7 +398,7 @@ export default function Reports() {
                   )
                 })}
               </tbody>
-            </table>
+            </table></div>
           )}
         </section>
 

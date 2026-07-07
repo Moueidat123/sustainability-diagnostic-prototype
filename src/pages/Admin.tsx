@@ -146,7 +146,7 @@ export default function Admin() {
 
       {/* ===== FUEL FACTORS ===== */}
       {tab === 'fuels' && (
-        <section className="bg-white border border-slate-200 rounded-xl p-5">
+        <section className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Fuel emission factors</h2>
@@ -159,7 +159,7 @@ export default function Admin() {
                   placeholder="Search fuels…"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  className="pl-8 w-56"
+                  className="pl-8 w-40 sm:w-56"
                 />
               </div>
               <Button variant="ghost" onClick={() => { fuels.resetAll(); flash('All fuel overrides cleared.') }}>
@@ -167,7 +167,7 @@ export default function Admin() {
               </Button>
             </div>
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-1"><table className="w-full text-sm min-w-[560px]">
             <thead className="text-xs text-slate-500 border-b border-slate-200">
               <tr>
                 <th className="text-left py-2">Fuel</th>
@@ -211,7 +211,7 @@ export default function Admin() {
                 )
               })}
             </tbody>
-          </table>
+          </table></div>
           <p className="text-[11px] text-slate-500 mt-3">
             Tip: edit a value and press <kbd>Tab</kbd> to save. Set it equal to the default to clear the override.
           </p>
@@ -220,7 +220,7 @@ export default function Admin() {
 
       {/* ===== GRID FACTORS ===== */}
       {tab === 'grid' && (
-        <section className="bg-white border border-slate-200 rounded-xl p-5">
+        <section className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Grid electricity factors</h2>
@@ -230,7 +230,7 @@ export default function Admin() {
               <RotateCcw size={14} /> Reset all
             </Button>
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-1"><table className="w-full text-sm min-w-[560px]">
             <thead className="text-xs text-slate-500 border-b border-slate-200">
               <tr>
                 <th className="text-left py-2">Country</th>
@@ -270,13 +270,13 @@ export default function Admin() {
                 )
               })}
             </tbody>
-          </table>
+          </table></div>
         </section>
       )}
 
       {/* ===== BENCHMARKS ===== */}
       {tab === 'benchmarks' && (
-        <section className="bg-white border border-slate-200 rounded-xl p-5">
+        <section className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Sector benchmarks (tCO₂e / company / year)</h2>
@@ -286,7 +286,7 @@ export default function Admin() {
               <RotateCcw size={14} /> Reset all
             </Button>
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-1"><table className="w-full text-sm min-w-[560px]">
             <thead className="text-xs text-slate-500 border-b border-slate-200">
               <tr>
                 <th className="text-left py-2">Sector</th>
@@ -326,14 +326,14 @@ export default function Admin() {
                 )
               })}
             </tbody>
-          </table>
+          </table></div>
         </section>
       )}
 
       {/* ===== MASTER LISTS ===== */}
       {tab === 'master' && (
         <section className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
             <h2 className="text-sm font-semibold text-slate-900 mb-1">Master lists (read-only in prototype)</h2>
             <p className="text-xs text-slate-500 mb-3">
               These controlled vocabularies will be CRUD-editable in the production Statamic build.
@@ -363,9 +363,9 @@ export default function Admin() {
       {/* ===== USERS ===== */}
       {tab === 'users' && (
         <section className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
             <h2 className="text-sm font-semibold text-slate-900 mb-3">Users & permissions</h2>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto -mx-1"><table className="w-full text-sm min-w-[560px]">
               <thead className="text-xs text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="text-left py-2">Name</th>
@@ -407,13 +407,13 @@ export default function Admin() {
                   <tr><td colSpan={5} className="py-6 text-center text-xs text-slate-400 italic">No users.</td></tr>
                 )}
               </tbody>
-            </table>
+            </table></div>
             <div className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
               <AlertCircle size={12} /> Changes are persisted locally only — this is a UI prototype, not a real auth backend.
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-slate-900 mb-3">Invite user</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
               <Field label="Full name" required>
@@ -441,7 +441,7 @@ export default function Admin() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-slate-900 mb-3">Permissions matrix</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
