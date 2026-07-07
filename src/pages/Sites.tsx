@@ -54,6 +54,7 @@ export default function Sites() {
   }
 
   const err = (k: keyof Site) => (touched[k] ? errors[k] : undefined)
+  const ok  = (k: keyof Site) => !!editing && !errors[k] && String(editing[k] ?? '').trim() !== ''
   const set = <K extends keyof Site>(k: K, v: Site[K]) =>
     setEditing(s => s ? { ...s, [k]: v } : s)
 
@@ -134,36 +135,43 @@ export default function Sites() {
       >
         {editing && (
           <form id="site-form" onSubmit={save} noValidate className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Site name" required error={err('name')}>
-              <Input value={editing.name} invalid={!!err('name')}
+            <Field label="Site name" required error={err('name')} valid={ok('name')}
+                   tooltip="A recognisable name for this location — used across all emissions tables and charts.">
+              <Input value={editing.name} invalid={!!err('name')} valid={ok('name')}
                      onChange={e => set('name', e.target.value)}
                      onBlur={() => setTouched(t => ({ ...t, name: true }))}
                      placeholder="e.g. Riyadh Head Office" />
             </Field>
-            <Field label="City" required error={err('city')}>
-              <Input value={editing.city} invalid={!!err('city')}
+            <Field label="City" required error={err('city')} valid={ok('city')}
+                   tooltip="The city where this site is located.">
+              <Input value={editing.city} invalid={!!err('city')} valid={ok('city')}
                      onChange={e => set('city', e.target.value)}
                      onBlur={() => setTouched(t => ({ ...t, city: true }))} />
             </Field>
-            <Field label="Country" required error={err('country')}>
-              <Select value={editing.country} invalid={!!err('country')}
+            <Field label="Country" required error={err('country')} valid={ok('country')}
+                   tooltip="Country of this site. Sets the default electricity grid factor for its Scope 2 entries.">
+              <Select value={editing.country} invalid={!!err('country')} valid={ok('country')}
                       onChange={e => set('country', e.target.value)}
                       onBlur={() => setTouched(t => ({ ...t, country: true }))}>
                 <option value="">Select country…</option>
                 {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
               </Select>
             </Field>
-            <Field label="Ownership" required error={err('ownership')}>
-              <Select value={editing.ownership} invalid={!!err('ownership')}
+            <Field label="Ownership" required error={err('ownership')} valid={ok('ownership')}
+                   tooltip="Whether the site is owned, leased or co-located. Affects operational vs financial control boundaries.">
+              <Select value={editing.ownership} invalid={!!err('ownership')} valid={ok('ownership')}
                       onChange={e => set('ownership', e.target.value)}
                       onBlur={() => setTouched(t => ({ ...t, ownership: true }))}>
                 <option value="">Select…</option>
                 {OWNERSHIP_TYPES.map(o => <option key={o} value={o}>{o}</option>)}
               </Select>
             </Field>
-            <Field label="Floor area (m²)" error={err('floorArea')} hint="Optional">
+            <Field label="Floor area (m²)" error={err('floorArea')} hint="Optional"
+                   valid={!!editing && !errors.floorArea && editing.floorArea !== '' }
+                   tooltip="Optional gross internal floor area in square metres. Enables emissions-intensity metrics later.">
               <Input type="number" min={0} value={editing.floorArea}
                      invalid={!!err('floorArea')}
+                     valid={!!editing && !errors.floorArea && editing.floorArea !== ''}
                      onChange={e => set('floorArea', e.target.value === '' ? '' : Number(e.target.value))}
                      onBlur={() => setTouched(t => ({ ...t, floorArea: true }))} />
             </Field>

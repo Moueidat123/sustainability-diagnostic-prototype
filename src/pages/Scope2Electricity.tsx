@@ -104,6 +104,7 @@ export default function Scope2Electricity() {
   }
 
   const err = (k: keyof ElectricityEntry) => (touched[k] ? errors[k] : undefined)
+  const ok  = (k: keyof ElectricityEntry) => !!editing && !errors[k] && String(editing[k] ?? '').trim() !== ''
   const set = <K extends keyof ElectricityEntry>(k: K, v: ElectricityEntry[K]) =>
     setEditing(s => s ? { ...s, [k]: v } : s)
 
@@ -320,8 +321,9 @@ export default function Scope2Electricity() {
         {editing && (
           <form id="elec-form" onSubmit={save} noValidate className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Site" required error={err('siteId')}>
-                <Select value={editing.siteId} invalid={!!err('siteId')}
+              <Field label="Site" required error={err('siteId')} valid={ok('siteId')}
+                     tooltip="The location this electricity was consumed at. Selecting it auto-fills the country below.">
+                <Select value={editing.siteId} invalid={!!err('siteId')} valid={ok('siteId')}
                         onChange={e => onSiteChange(e.target.value)}
                         onBlur={() => setTouched(t => ({ ...t, siteId: true }))}>
                   <option value="">Select site…</option>
@@ -329,9 +331,10 @@ export default function Scope2Electricity() {
                 </Select>
               </Field>
 
-              <Field label="Country (for grid factor)" required error={err('country')}
-                     hint={`Factor: ${previewFactor.toFixed(3)} kgCO₂e/kWh`}>
-                <Select value={editing.country} invalid={!!err('country')}
+              <Field label="Country (for grid factor)" required error={err('country')} valid={ok('country')}
+                     hint={`Factor: ${previewFactor.toFixed(3)} kgCO₂e/kWh`}
+                     tooltip="Determines the grid emission factor applied to grid kWh. Defaults from the selected site's country.">
+                <Select value={editing.country} invalid={!!err('country')} valid={ok('country')}
                         onChange={e => set('country', e.target.value)}
                         onBlur={() => setTouched(t => ({ ...t, country: true }))}>
                   <option value="">Select country…</option>
@@ -343,31 +346,41 @@ export default function Scope2Electricity() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Field label="Grid electricity (kWh)" error={err('gridKwh')} hint="Non-renewable / supplier mix">
+              <Field label="Grid electricity (kWh)" error={err('gridKwh')} hint="Non-renewable / supplier mix"
+                     valid={!!editing && !errors.gridKwh && editing.gridKwh !== ''}
+                     tooltip="Electricity drawn from the public grid. This is what generates Scope 2 emissions.">
                 <Input type="number" min={0} step="any"
                        value={editing.gridKwh} invalid={!!err('gridKwh')}
+                       valid={!!editing && !errors.gridKwh && editing.gridKwh !== ''}
                        onChange={e => set('gridKwh', e.target.value === '' ? '' : Number(e.target.value))}
                        onBlur={() => setTouched(t => ({ ...t, gridKwh: true }))} />
               </Field>
               <Field label="Purchased renewable (kWh)" error={err('purchasedRenewableKwh')}
-                     hint="Green tariff / RECs">
+                     hint="Green tariff / RECs"
+                     valid={!!editing && !errors.purchasedRenewableKwh && editing.purchasedRenewableKwh !== ''}
+                     tooltip="Renewable electricity you buy — green tariffs or Renewable Energy Certificates. Counts as zero-emission.">
                 <Input type="number" min={0} step="any"
                        value={editing.purchasedRenewableKwh}
                        invalid={!!err('purchasedRenewableKwh')}
+                       valid={!!editing && !errors.purchasedRenewableKwh && editing.purchasedRenewableKwh !== ''}
                        onChange={e => set('purchasedRenewableKwh', e.target.value === '' ? '' : Number(e.target.value))}
                        onBlur={() => setTouched(t => ({ ...t, purchasedRenewableKwh: true }))} />
               </Field>
               <Field label="On-site renewable (kWh)" error={err('onsiteRenewableKwh')}
-                     hint="Solar PV, wind, etc.">
+                     hint="Solar PV, wind, etc."
+                     valid={!!editing && !errors.onsiteRenewableKwh && editing.onsiteRenewableKwh !== ''}
+                     tooltip="Electricity you generate on-site from solar panels, wind, etc. Counts as zero-emission.">
                 <Input type="number" min={0} step="any"
                        value={editing.onsiteRenewableKwh}
                        invalid={!!err('onsiteRenewableKwh')}
+                       valid={!!editing && !errors.onsiteRenewableKwh && editing.onsiteRenewableKwh !== ''}
                        onChange={e => set('onsiteRenewableKwh', e.target.value === '' ? '' : Number(e.target.value))}
                        onBlur={() => setTouched(t => ({ ...t, onsiteRenewableKwh: true }))} />
               </Field>
             </div>
 
-            <Field label="Note" hint="Optional — e.g. meter reference">
+            <Field label="Note" hint="Optional — e.g. meter reference"
+                   tooltip="Any supporting detail — meter numbers, billing period, or estimation basis for the reviewer.">
               <Textarea rows={2} value={editing.note ?? ''}
                         onChange={e => set('note', e.target.value)} />
             </Field>

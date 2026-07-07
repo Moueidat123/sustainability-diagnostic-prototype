@@ -100,6 +100,7 @@ export default function Scope1Fleet() {
   }
 
   const err = (k: keyof FleetEntry) => (touched[k] ? errors[k] : undefined)
+  const ok  = (k: keyof FleetEntry) => !!editing && !errors[k] && String(editing[k] ?? '').trim() !== ''
   const set = <K extends keyof FleetEntry>(k: K, v: FleetEntry[K]) =>
     setEditing(s => s ? { ...s, [k]: v } : s)
 
@@ -296,8 +297,9 @@ export default function Scope1Fleet() {
         {editing && (
           <form id="fleet-form" onSubmit={save} noValidate className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Site" required error={err('siteId')}>
-                <Select value={editing.siteId} invalid={!!err('siteId')}
+              <Field label="Site" required error={err('siteId')} valid={ok('siteId')}
+                     tooltip="The site these vehicles are primarily based at or operated from.">
+                <Select value={editing.siteId} invalid={!!err('siteId')} valid={ok('siteId')}
                         onChange={e => set('siteId', e.target.value)}
                         onBlur={() => setTouched(t => ({ ...t, siteId: true }))}>
                   <option value="">Select site…</option>
@@ -305,8 +307,9 @@ export default function Scope1Fleet() {
                 </Select>
               </Field>
 
-              <Field label="Vehicle type" required error={err('vehicleType')}>
-                <Select value={editing.vehicleType} invalid={!!err('vehicleType')}
+              <Field label="Vehicle type" required error={err('vehicleType')} valid={ok('vehicleType')}
+                     tooltip="Category of vehicle — cars, vans, trucks, etc. For reporting classification.">
+                <Select value={editing.vehicleType} invalid={!!err('vehicleType')} valid={ok('vehicleType')}
                         onChange={e => set('vehicleType', e.target.value)}
                         onBlur={() => setTouched(t => ({ ...t, vehicleType: true }))}>
                   <option value="">Select…</option>
@@ -314,8 +317,9 @@ export default function Scope1Fleet() {
                 </Select>
               </Field>
 
-              <Field label="Fuel" required error={err('fuelId')}>
-                <Select value={editing.fuelId} invalid={!!err('fuelId')}
+              <Field label="Fuel" required error={err('fuelId')} valid={ok('fuelId')}
+                     tooltip="The fuel these vehicles run on — petrol, diesel, LPG or CNG.">
+                <Select value={editing.fuelId} invalid={!!err('fuelId')} valid={ok('fuelId')}
                         onChange={e => set('fuelId', e.target.value)}
                         onBlur={() => setTouched(t => ({ ...t, fuelId: true }))}>
                   <option value="">Select fuel…</option>
@@ -325,9 +329,12 @@ export default function Scope1Fleet() {
                 </Select>
               </Field>
 
-              <Field label="Number of vehicles" error={err('vehicleCount')} hint="Optional — for reference only">
+              <Field label="Number of vehicles" error={err('vehicleCount')} hint="Optional — for reference only"
+                     valid={!!editing && !errors.vehicleCount && editing.vehicleCount !== ''}
+                     tooltip="How many vehicles this row represents. Does not affect the calculation — it's for your records.">
                 <Input type="number" min={1} value={editing.vehicleCount}
                        invalid={!!err('vehicleCount')}
+                       valid={!!editing && !errors.vehicleCount && editing.vehicleCount !== ''}
                        onChange={e => set('vehicleCount', e.target.value === '' ? '' : Number(e.target.value))}
                        onBlur={() => setTouched(t => ({ ...t, vehicleCount: true }))} />
               </Field>
@@ -353,34 +360,38 @@ export default function Scope1Fleet() {
             {/* Mode-specific inputs */}
             {editing.mode === 'fuel' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Fuel consumed" required error={err('quantity')}
-                       hint={previewFactor ? `Unit: ${previewFactor.unit}` : 'Pick a fuel to see the unit'}>
+                <Field label="Fuel consumed" required error={err('quantity')} valid={ok('quantity')}
+                       hint={previewFactor ? `Unit: ${previewFactor.unit}` : 'Pick a fuel to see the unit'}
+                       tooltip="Total fuel these vehicles used during the year, in the fuel's unit (e.g. litres).">
                   <Input type="number" min={0} step="any"
-                         value={editing.quantity} invalid={!!err('quantity')}
+                         value={editing.quantity} invalid={!!err('quantity')} valid={ok('quantity')}
                          onChange={e => set('quantity', e.target.value === '' ? '' : Number(e.target.value))}
                          onBlur={() => setTouched(t => ({ ...t, quantity: true }))} />
                 </Field>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Total km driven" required error={err('kmDriven')}>
+                <Field label="Total km driven" required error={err('kmDriven')} valid={ok('kmDriven')}
+                       tooltip="Total distance travelled by these vehicles during the reporting year, in kilometres.">
                   <Input type="number" min={0} step="any"
-                         value={editing.kmDriven} invalid={!!err('kmDriven')}
+                         value={editing.kmDriven} invalid={!!err('kmDriven')} valid={ok('kmDriven')}
                          onChange={e => set('kmDriven', e.target.value === '' ? '' : Number(e.target.value))}
                          onBlur={() => setTouched(t => ({ ...t, kmDriven: true }))} />
                 </Field>
                 <Field label={`Consumption per 100 km (${previewFactor?.unit ?? 'unit'}/100km)`}
-                       required error={err('consumptionPer100km')}
-                       hint="Typical: petrol cars ~8, vans ~10, trucks ~30">
+                       required error={err('consumptionPer100km')} valid={ok('consumptionPer100km')}
+                       hint="Typical: petrol cars ~8, vans ~10, trucks ~30"
+                       tooltip="Average fuel used per 100 km. We multiply this by the distance to work out total fuel.">
                   <Input type="number" min={0} step="any"
-                         value={editing.consumptionPer100km} invalid={!!err('consumptionPer100km')}
+                         value={editing.consumptionPer100km} invalid={!!err('consumptionPer100km')} valid={ok('consumptionPer100km')}
                          onChange={e => set('consumptionPer100km', e.target.value === '' ? '' : Number(e.target.value))}
                          onBlur={() => setTouched(t => ({ ...t, consumptionPer100km: true }))} />
                 </Field>
               </div>
             )}
 
-            <Field label="Note" hint="Optional">
+            <Field label="Note" hint="Optional"
+                   tooltip="Any supporting detail — fuel-card references, estimation basis, or notes for the reviewer.">
               <Textarea rows={2} value={editing.note ?? ''}
                         onChange={e => set('note', e.target.value)} />
             </Field>

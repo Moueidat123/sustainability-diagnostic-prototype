@@ -77,6 +77,7 @@ export default function Scope1Fuels() {
   }
 
   const err = (k: keyof FuelEntry) => (touched[k] ? errors[k] : undefined)
+  const ok  = (k: keyof FuelEntry) => !!editing && !errors[k] && String(editing[k] ?? '').trim() !== ''
   const set = <K extends keyof FuelEntry>(k: K, v: FuelEntry[K]) =>
     setEditing(s => s ? { ...s, [k]: v } : s)
 
@@ -248,16 +249,18 @@ export default function Scope1Fuels() {
         {editing && (
           <form id="fuel-form" onSubmit={save} noValidate className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Site" required error={err('siteId')}>
-                <Select value={editing.siteId} invalid={!!err('siteId')}
+              <Field label="Site" required error={err('siteId')} valid={ok('siteId')}
+                     tooltip="Which location this fuel was burned at. Emissions are grouped per site.">
+                <Select value={editing.siteId} invalid={!!err('siteId')} valid={ok('siteId')}
                         onChange={e => set('siteId', e.target.value)}
                         onBlur={() => setTouched(t => ({ ...t, siteId: true }))}>
                   <option value="">Select site…</option>
                   {sites.map(s => <option key={s.id} value={s.id}>{s.name} — {s.city}</option>)}
                 </Select>
               </Field>
-              <Field label="Fuel type" required error={err('fuelId')}>
-                <Select value={editing.fuelId} invalid={!!err('fuelId')}
+              <Field label="Fuel type" required error={err('fuelId')} valid={ok('fuelId')}
+                     tooltip="Stationary combustion fuel — e.g. natural gas for heating, diesel for generators. The unit updates to match.">
+                <Select value={editing.fuelId} invalid={!!err('fuelId')} valid={ok('fuelId')}
                         onChange={e => set('fuelId', e.target.value)}
                         onBlur={() => setTouched(t => ({ ...t, fuelId: true }))}>
                   <option value="">Select fuel…</option>
@@ -266,15 +269,17 @@ export default function Scope1Fuels() {
                   ))}
                 </Select>
               </Field>
-              <Field label="Quantity" required error={err('quantity')}
-                     hint={previewFactor ? `Unit: ${previewFactor.unit}` : 'Pick a fuel to see the unit'}>
+              <Field label="Quantity" required error={err('quantity')} valid={ok('quantity')}
+                     hint={previewFactor ? `Unit: ${previewFactor.unit}` : 'Pick a fuel to see the unit'}
+                     tooltip="Total amount consumed during the reporting year, in the unit shown for the chosen fuel.">
                 <Input type="number" min={0} step="any"
                        value={editing.quantity}
-                       invalid={!!err('quantity')}
+                       invalid={!!err('quantity')} valid={ok('quantity')}
                        onChange={e => set('quantity', e.target.value === '' ? '' : Number(e.target.value))}
                        onBlur={() => setTouched(t => ({ ...t, quantity: true }))} />
               </Field>
-              <Field label="Note" hint="Optional — e.g. meter reading reference">
+              <Field label="Note" hint="Optional — e.g. meter reading reference"
+                     tooltip="Any supporting detail a reviewer might need — meter IDs, estimation basis, invoice references.">
                 <Textarea rows={2} value={editing.note ?? ''}
                           onChange={e => set('note', e.target.value)} />
               </Field>

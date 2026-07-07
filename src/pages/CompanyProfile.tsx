@@ -48,6 +48,7 @@ export default function CompanyProfile() {
   }
 
   const err = (k: keyof Company) => (touched[k] ? errors[k] : undefined)
+  const ok  = (k: keyof Company) => !errors[k] && String(draft[k] ?? '').trim() !== ''
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -82,22 +83,25 @@ export default function CompanyProfile() {
       <form onSubmit={submit} noValidate>
         <Card title="Company details">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Company name" required error={err('name')}>
-              <Input value={draft.name} invalid={!!err('name')}
+            <Field label="Company name" required error={err('name')} valid={ok('name')}
+                   tooltip="The trading name your organisation is commonly known by.">
+              <Input value={draft.name} invalid={!!err('name')} valid={ok('name')}
                      onChange={e => set('name', e.target.value)}
                      onBlur={() => setTouched(t => ({ ...t, name: true }))}
                      placeholder="e.g. Acme Industries Ltd." />
             </Field>
 
-            <Field label="Legal entity" required error={err('legalEntity')}>
-              <Input value={draft.legalEntity} invalid={!!err('legalEntity')}
+            <Field label="Legal entity" required error={err('legalEntity')} valid={ok('legalEntity')}
+                   tooltip="The full registered legal name exactly as it appears on official registration documents.">
+              <Input value={draft.legalEntity} invalid={!!err('legalEntity')} valid={ok('legalEntity')}
                      onChange={e => set('legalEntity', e.target.value)}
                      onBlur={() => setTouched(t => ({ ...t, legalEntity: true }))}
                      placeholder="Registered legal name" />
             </Field>
 
-            <Field label="Sector" required error={err('sector')}>
-              <Select value={draft.sector} invalid={!!err('sector')}
+            <Field label="Sector" required error={err('sector')} valid={ok('sector')}
+                   tooltip="Your primary industry. Used to benchmark your emissions against similar companies.">
+              <Select value={draft.sector} invalid={!!err('sector')} valid={ok('sector')}
                       onChange={e => set('sector', e.target.value)}
                       onBlur={() => setTouched(t => ({ ...t, sector: true }))}>
                 <option value="">Select sector…</option>
@@ -105,8 +109,9 @@ export default function CompanyProfile() {
               </Select>
             </Field>
 
-            <Field label="Country" required error={err('country')}>
-              <Select value={draft.country} invalid={!!err('country')}
+            <Field label="Country" required error={err('country')} valid={ok('country')}
+                   tooltip="Country of primary operations or HQ. Determines the electricity grid factor used in Scope 2.">
+              <Select value={draft.country} invalid={!!err('country')} valid={ok('country')}
                       onChange={e => set('country', e.target.value)}
                       onBlur={() => setTouched(t => ({ ...t, country: true }))}>
                 <option value="">Select country…</option>
@@ -114,8 +119,9 @@ export default function CompanyProfile() {
               </Select>
             </Field>
 
-            <Field label="Reporting year" required error={err('reportingYear')}>
-              <Select value={draft.reportingYear}
+            <Field label="Reporting year" required error={err('reportingYear')} valid={ok('reportingYear')}
+                   tooltip="The calendar year this diagnostic covers. All emissions data should relate to this period.">
+              <Select value={draft.reportingYear} valid={ok('reportingYear')}
                       onChange={e => set('reportingYear', e.target.value)}>
                 {REPORTING_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
               </Select>
@@ -123,7 +129,8 @@ export default function CompanyProfile() {
 
             <div /> {/* spacer */}
 
-            <Field label="Business description" hint="Short description used in the final report.">
+            <Field label="Business description" hint="Short description used in the final report."
+                   tooltip="A brief summary of what the company does — appears on the cover of the generated report.">
               <Textarea value={draft.description}
                         onChange={e => set('description', e.target.value)}
                         placeholder="What the company does, main activities, markets…"
@@ -138,18 +145,21 @@ export default function CompanyProfile() {
 
         <Card title="Primary contact">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Contact name" required error={err('contactName')}>
-              <Input value={draft.contactName} invalid={!!err('contactName')}
+            <Field label="Contact name" required error={err('contactName')} valid={ok('contactName')}
+                   tooltip="The person responsible for this submission and its accuracy.">
+              <Input value={draft.contactName} invalid={!!err('contactName')} valid={ok('contactName')}
                      onChange={e => set('contactName', e.target.value)}
                      onBlur={() => setTouched(t => ({ ...t, contactName: true }))} />
             </Field>
-            <Field label="Email" required error={err('contactEmail')}>
-              <Input type="email" value={draft.contactEmail} invalid={!!err('contactEmail')}
+            <Field label="Email" required error={err('contactEmail')} valid={ok('contactEmail')}
+                   tooltip="Review updates, comments and accreditation notifications are sent here.">
+              <Input type="email" value={draft.contactEmail} invalid={!!err('contactEmail')} valid={ok('contactEmail')}
                      onChange={e => set('contactEmail', e.target.value)}
                      onBlur={() => setTouched(t => ({ ...t, contactEmail: true }))}
                      placeholder="name@company.com" />
             </Field>
-            <Field label="Phone">
+            <Field label="Phone"
+                   tooltip="Optional direct line, in case the reviewer needs to clarify something quickly.">
               <Input value={draft.contactPhone}
                      onChange={e => set('contactPhone', e.target.value)}
                      placeholder="+966 …" />
